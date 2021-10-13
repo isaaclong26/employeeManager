@@ -1,17 +1,15 @@
 const mysql = require('mysql2');
-
+const figlet = require("figlet")
 const table = require("console.table")
 const inquirer = require("inquirer")
 const db = mysql.createConnection({
-        host: 'localhost',
-        // MySQL username,
-        user: 'root',
-        // MySQL password
-        password: 'roottoor',
-        database: 'testdb'
-    },
-    console.log(`Connected to the testdb database.`)
-);
+    host: 'localhost',
+    // MySQL username,
+    user: 'root',
+    // MySQL password
+    password: 'roottoor',
+    database: 'testdb'
+}, );
 
 
 
@@ -58,7 +56,7 @@ const mainMenu = () => {
                     updateRole();
                     break;
                 case "Quit":
-                    process.exit();
+                    quit();
                     break;
             }
 
@@ -68,14 +66,16 @@ const mainMenu = () => {
 }
 
 const veiwEmployees = () => {
+    //working!
     let joinQ = ` SELECT employees.id , employees.first_name, employees.last_name, roles.title, roles.salary,  employees.manager_id
                 From  employees, roles, departments 
                 WHERE roles.id = employees.role_id AND departments.id = roles.department_id`
 
     db.query(joinQ, function (err, results) {
         console.table(results);
-        return results;
         mainMenu();
+        return results;
+      
     });
 }
 
@@ -95,43 +95,119 @@ const veiwDepart = () => {
     })
 }
 
-const addEmployee = (first, last, managerId, roleId) => {
-    
-    let sqlQ = `INSERT INTO employees (first_name, last_name, manager_id, role_id)
-                VALUES("${first}", "${last}", ${managerId}, ${roleId});`
+function addEmployee() {
+//WORKING
+    getPromtList("roles").then(function (results) {
+        inquirer
+            .prompt([{
+                    name: "role",
+                    message: "Select Role",
+                    type: "list",
+                    choices: results
+                },
+                {
+                    name: "first",
+                    message: "Enter first name"
+                },
+                {
+                    name: "last",
+                    message: "Enter last name"
+                },
+                {
+                    name: "manager_id",
+                    message: "Enter manager id"
+                }
 
-    db.query(sqlQ, function (err, results) {
-        if (err) throw err;
-        console.log("1 record inserted");
-        mainMenu();
+
+            ])
+            .then((answers) => {
+                let sqlQ = `INSERT INTO employees (first_name, last_name, manager_id, role_id)
+                                                    VALUES("${answers.first}", "${answers.last}", ${answers.manager_id}, ${answers.role});`;
+                db.query(sqlQ, function (err, results) {
+                    if (err) throw err;
+                    console.log("1 record inserted");
+                    mainMenu();
+                })
+            })
+
+
+
+
+
     })
 
+
+
 }
+
+
+
+
+
+
+
+
 
 const addRole = (id, title, salary, department_id) => {
-    // WORKING
-    let sqlQ = `INSERT INTO roles(id,title, salary, department_id)
-                VALUES(${id},"${title}", ${salary}, ${department_id});`
+    //WORKING 
+    getPromtList("departments")
+        .then(function (results) {
+            inquirer
+                .prompt([{
+                        name: "department",
+                        message: "Select Department",
+                        type: "list",
+                        choices: results
+                    },
+                    {
+                        name: "salary",
+                        message: "Enter salary"
+                    },
 
-    db.query(sqlQ, function (err, results) {
-        if (err) throw err;
-        console.log("1 record inserted");
-        mainMenu();
-    })
+                    {
+                        name: "title",
+                        message: "Enter name of role"
+                    },
+                    {
+                        name: "id",
+                        message: "Enter role id"
+                    }
+                ])
+                .then((answers) => {
+                    var department_id = answers.department;
+                    let salary = answers.salary;
+                    let title = answers.title
+                    let id = answers.id
+                    let sqlQ = `INSERT INTO roles(id,title, salary, department_id)
+                                VALUES(${id},"${title}", ${salary}, ${department_id});`
+
+                    db.query(sqlQ, function (err, results) {
+                        if (err) throw err;
+                        console.log("1 record inserted");
+                        mainMenu();
+                    })
+                })
+        })
+
+
 
 }
 
-const addDepartment = (title) => {
-
+const addDepartment = () => {
+    inquirer
+    .prompt([
+        {name: "title", message:"Enter name of department"}
+    ])
+    .then((answers)=>{
     let sqlQ = `INSERT INTO departments(title)
-                VALUES("${title}");`
+                VALUES("${answers.title}");`
 
     db.query(sqlQ, function (err, results) {
         if (err) throw err;
         console.log("1 record inserted");
         mainMenu();
     })
-
+    })
 }
 
 const updateRole = () => {
@@ -195,5 +271,47 @@ const updateRole = () => {
 
 }
 
+const getPromtList = (table) => {
+    return new Promise((resolve, reject) => {
 
-mainMenu();
+        var list = [];
+        // var fillList = () => {
+        db.query(`SELECT * FROM ${table}`, function (err, results) {
+            if (err) throw err;
+
+            for (i in results) {
+                let li = {
+                    name: results[i].title,
+                    value: results[i].id
+                }
+                list.push(li);
+            }
+            resolve(list)
+
+
+            // })
+
+
+
+        })
+        // return fillList();
+    });
+};
+
+function quit(){
+    console.log("Goodbye");
+    process.exit();
+}
+function main(){
+    figlet('Employee Manager', function(err, data) {
+        if (err) {
+            console.log('Something went wrong...');
+            console.dir(err);
+            return;
+        }
+        console.log(data);
+        mainMenu();
+    });
+    
+}
+main();
