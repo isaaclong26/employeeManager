@@ -3,6 +3,9 @@
 
 ### Description
 node program to keep track of employees
+![image](https://user-images.githubusercontent.com/54558961/137054458-21b74ed6-7350-48c0-9033-e22ae324a4fe.png)
+
+link to video : https://drive.google.com/drive/folders/1mMLPklKYxFSuLGijMuPNNJY7UStTm9Jt?usp=sharing
 
 
 ## Table of contents
